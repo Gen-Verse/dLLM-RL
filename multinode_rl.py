@@ -309,7 +309,7 @@ if __name__ == "__main__":
             train(worker_hosts, epoch, cfg, model_base, target = None)
 
         if epoch % cfg.experiment.eval_every == 0:
-            if model_base == "sdar":
+            if model_base in ["sdar", "trado"]:
                 remasking_strategy_list = cfg.evaluation.remasking_strategy
                 top_k_list = cfg.evaluation.top_k
                 block_size = cfg.evaluation.block_size
