@@ -162,7 +162,7 @@ if __name__ == "__main__":
             train(i, target = None)
 
         if i % config.experiment.eval_every == 0:
-            if model_base == "sdar":
+            if model_base in ["sdar", "trado"]:
                 remasking_strategy_list = config.evaluation.remasking_strategy
                 top_k_list = config.evaluation.top_k
                 block_size = config.evaluation.block_size
