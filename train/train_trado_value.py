@@ -108,7 +108,7 @@ def main():
     pretrained_model = "./" + project_name + "/ckpt/" + config.model.optimized_value_name
 
     from transformers import AutoConfig
-    from train.init_trodo_value_model import _get_value_model
+    from train.init_trado_value_model import _get_value_model
     from models import SDARForCausalLM
     value_model_class = _get_value_model(SDARForCausalLM, "value_head")
 
