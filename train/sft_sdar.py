@@ -625,15 +625,15 @@ def main():
         attention_mask = process_pad(attention_mask, extended_input_ids)
 
         labels_trim = labels[:, L0:].clone()                             # (B, L1)
-        resp_keep   = p_mask[:, L0:]                                        # (B, L1) True=训练
+        resp_keep   = p_mask[:, L0:]                                        # (B, L1) 
         labels_trim[~resp_keep] = -100   
 
         out = model(
             input_ids      = extended_input_ids,
             attention_mask = attention_mask,
             position_ids   = tok_idx_ext,
-            labels         = labels_trim,    # 注意：这里与 logits_to_keep 对齐
-            logits_to_keep = L1,             # 关键：只算最后 L1 个 time steps
+            labels         = labels_trim,    
+            logits_to_keep = L1,            
             return_dict    = True,
             use_cache      = False,
         )
