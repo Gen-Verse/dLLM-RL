@@ -84,14 +84,68 @@ class Scheduler:
                     block_len = seq.block_length
                     if not self.consistent_sampling_params:
                         if seq.top_k > 0:
-                            probs = self.sample_pipe(logits[start_idx : start_idx + block_len], temperature=seq.temperature, top_k=seq.top_k, top_p=seq.top_p) 
+                            probs = self.sample_pipe(logits[start_idx : start_idx + block_len], temperature=seq.temperature, top_k=seq.top_k, top_p=seq.top_p)
                         else:
                             probs = self.sample_pipe_topk0(logits[start_idx : start_idx + block_len], temperature=seq.temperature, top_p=seq.top_p)
                         seq_x0 = torch.multinomial(probs, num_samples=1).squeeze(-1) 
                         seq_x0_p = torch.gather(probs, -1, seq_x0.unsqueeze(-1)).squeeze(-1)    
                     else:
                         seq_x0 = torch.multinomial(probs[start_idx : start_idx + block_len], num_samples=1).squeeze(-1) 
-                        seq_x0_p = torch.gather(probs[start_idx : start_idx + block_len], -1, seq_x0.unsqueeze(-1)).squeeze(-1)    
+                        seq_x0_p = torch.gather(probs[start_idx : start_idx + block_len], -1, seq_x0.unsqueeze(-1)).squeeze(-1)
+
+                    # ========== PPL EVALUATION MODE ==========
+                    if seq.eval_mode and seq.full_oracle_sentence is not None:
+                        # Get oracle for CURRENT block
+                        oracle_block = seq.get_current_block_oracle()
+                        if oracle_block is None:
+                            # Beyond sentence length, treat as normal generation
+                            seq.eval_mode = False
+                        else:
+                            oracle_block_tensor = torch.tensor(oracle_block, device=logits.device)
+                            
+                            # Get probabilities for oracle tokens
+                            oracle_probs = torch.gather(
+                                probs[start_idx : start_idx + block_len], 
+                                -1, 
+                                oracle_block_tensor.unsqueeze(-1)
+                            ).squeeze(-1)
+                            
+                            # Find masked positions in current block
+                            current_block_tensor = torch.tensor(seq.intermediate_block_tokens, device=logits.device)
+                            mask_index = (current_block_tensor == self.mask_token_id)
+                            
+                            # Select best masked position based on oracle probabilities
+                            masked_oracle_probs = torch.where(
+                                mask_index, 
+                                oracle_probs, 
+                                torch.tensor(-np.inf, device=logits.device)
+                            )
+                            
+                            # For low_confidence_static: select highest probability
+                            best_pos = torch.argmax(masked_oracle_probs).item()
+                            best_prob = oracle_probs[best_pos]
+                            
+                            # Record log probability for THIS BLOCK
+                            seq.block_log_probs.append(torch.log(best_prob).item())
+                            seq.block_unmask_positions.append(best_pos)
+                            
+                            # Oracle unmask: use ground truth token
+                            seq.intermediate_block_tokens[best_pos] = oracle_block[best_pos]
+                            
+                            seq.current_denoising_step += 1
+                            seq.global_denoising_step += 1
+                            
+                            # Check if current block is complete
+                            is_fully_denoised = (self.mask_token_id not in seq.intermediate_block_tokens) or \
+                                                (seq.current_denoising_step >= seq.denoising_steps)
+                            
+                            if is_fully_denoised:
+                                seq.status = SequenceStatus.SAVING
+                            
+                            seq.num_to_transfer = 1
+                            start_idx += block_len
+                            continue
+                    # ========== END PPL EVALUATION MODE ==========
                     
                     current_block_tensor = torch.tensor(seq.intermediate_block_tokens, device=logits.device)
                     mask_index = (current_block_tensor == self.mask_token_id)
@@ -172,11 +226,28 @@ class Scheduler:
                     seq.num_to_transfer = num_to_transfer
                     
                 elif seq.status == SequenceStatus.SAVING:
-                    # If saving, commit the block and start a new one
-                    seq.commit_block(seq.intermediate_block_tokens)
-                    seq.num_to_transfer = 0
-                    if not seq.is_finished:
-                        seq.start_new_block()
+                    # Check if in eval mode
+                    if seq.eval_mode and seq.full_oracle_sentence is not None:
+                        # Commit current block
+                        seq.commit_block(seq.intermediate_block_tokens)
+                        seq.advance_to_next_block()  # Save block results
+                        
+                        # Check if there are more blocks to evaluate
+                        remaining_tokens = len(seq.full_oracle_sentence) - seq.num_tokens
+                        if remaining_tokens > 0:
+                            # Start next block
+                            seq.start_new_block()
+                        else:
+                            # All blocks evaluated, finish
+                            seq.status = SequenceStatus.FINISHED
+                        
+                        seq.num_to_transfer = 0
+                    else:
+                        # Normal saving logic
+                        seq.commit_block(seq.intermediate_block_tokens)
+                        seq.num_to_transfer = 0
+                        if not seq.is_finished:
+                            seq.start_new_block()
 
                 start_idx += seq.block_length
                 

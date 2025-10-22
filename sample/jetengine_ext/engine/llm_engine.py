@@ -122,9 +122,6 @@ class LLMEngine:
     def is_finished(self):
         return self.scheduler.is_finished()
 
-
-
-
     def _clean_token_ids(self, token_ids):
         # Accept tensors, numpy ints, etc.
         try:
@@ -150,8 +147,6 @@ class LLMEngine:
         # skip_special_tokens can be True or False; doesn't affect the None issue
         return self.tokenizer.decode(ids, skip_special_tokens=False)
     
-
-
     def generate(
         self,
         prompts: list[str] | list[list[int]],
@@ -316,4 +311,101 @@ class LLMEngine:
 
         if use_tqdm:
             pbar.close()
+        return results
+    
+    def evaluate_perplexity(
+        self,
+        sentences: list[list[int]],
+        block_length: int = 4,
+        use_tqdm: bool = True,
+    ) -> list[dict]:
+        """
+        Evaluate perplexity using oracle unmasking with flexible block length.
+        
+        Args:
+            sentences: List of token sequences, e.g., [[1,2,3,4,5,6,7,8], ...]
+            block_length: Fixed block length for evaluation (e.g., 4)
+            use_tqdm: Show progress bar
+        
+        Returns:
+            List of dicts with: 'perplexity', 'nll', 'unmask_order', 'log_probs', 'block_ppls'
+        """
+        import numpy as np
+        
+        results = []
+        
+        if use_tqdm:
+            pbar = tqdm(total=len(sentences), desc="Evaluating PPL")
+        
+        for sentence in sentences:
+            # Determine number of blocks
+            num_blocks = (len(sentence) + block_length - 1) // block_length
+            
+            # Pad sentence to multiple of block_length if needed
+            padded_length = num_blocks * block_length
+            if len(sentence) < padded_length:
+                # Note: you may want different padding strategy
+                sentence_padded = sentence + [self.tokenizer.pad_token_id] * (padded_length - len(sentence))
+            else:
+                sentence_padded = sentence
+            
+            # Create sampling params for evaluation
+            sampling_params = SamplingParams(
+                block_length=block_length,
+                denoising_steps=block_length,  # 1 token per step
+                remasking_strategy='low_confidence_static',
+                eval_mode=True,
+                ignore_eos=True,
+                max_tokens=len(sentence_padded),
+            )
+            
+            # Determine prefill length (tokens before first block to denoise)
+            # For pure left-to-right: prefill = 0 (start from all masks)
+            prefill_tokens = []
+            
+            # Create sequence
+            seq = Sequence(prefill_tokens, self.config.mask_token_id, sampling_params)
+            seq.eos_token_id = self.tokenizer.eos_token_id
+            seq.set_full_oracle_sentence(sentence_padded)
+            
+            self.scheduler.add(seq)
+            
+            # Run evaluation
+            while not self.is_finished():
+                self.step()
+            
+            # Extract results
+            # Only use log_probs for actual sentence (not padding)
+            valid_log_probs = seq.step_log_probs[:len(sentence)]
+            valid_unmask_order = seq.step_unmask_positions[:len(sentence)]
+            
+            nll = -np.mean(valid_log_probs)
+            ppl = np.exp(nll)
+            
+            # Compute per-block PPL for analysis
+            block_ppls = []
+            for i in range(num_blocks):
+                start = i * block_length
+                end = min(start + block_length, len(sentence))
+                block_log_probs = seq.step_log_probs[start:end]
+                if block_log_probs:
+                    block_nll = -np.mean(block_log_probs)
+                    block_ppls.append(np.exp(block_nll))
+            
+            results.append({
+                'sentence': sentence,
+                'perplexity': ppl,
+                'nll': nll,
+                'unmask_order': valid_unmask_order,
+                'log_probs': valid_log_probs,
+                'block_ppls': block_ppls,
+                'num_blocks': num_blocks,
+            })
+            
+            if use_tqdm:
+                pbar.update(1)
+        
+        if use_tqdm:
+            pbar.close()
+        
         return results

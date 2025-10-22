@@ -68,6 +68,47 @@ class Sequence:
         self.num_cached_tokens = 0
         self.block_table = []
 
+        # For PPL evaluation with flexible block length
+        self.eval_mode = sampling_params.eval_mode
+        self.full_oracle_sentence = None  # Complete sentence for PPL eval
+        self.current_block_idx = 0        # Which block we're evaluating
+        self.step_log_probs = []          # Log probs for ALL tokens across all blocks
+        self.step_unmask_positions = []   # Unmask order for ALL tokens
+        self.block_log_probs = []         # Log probs for current block only
+        self.block_unmask_positions = []  # Unmask order for current block
+
+    def set_full_oracle_sentence(self, oracle_sentence: list[int]):
+        """Set complete sentence for multi-block PPL evaluation"""
+        assert self.eval_mode, "Can only set oracle in eval mode"
+        self.full_oracle_sentence = oracle_sentence
+    
+    def get_current_block_oracle(self) -> list[int]:
+        """Get oracle tokens for current block"""
+        if self.full_oracle_sentence is None:
+            return None
+        
+        start_idx = self.current_block_idx * self.block_length
+        end_idx = start_idx + self.block_length
+        
+        # Return oracle for current block
+        return self.full_oracle_sentence[start_idx:end_idx]
+    
+    def advance_to_next_block(self):
+        """Move to next block and reset block-level tracking"""
+        # Save current block results to global results
+        self.step_log_probs.extend(self.block_log_probs)
+        self.step_unmask_positions.extend([
+            pos + self.current_block_idx * self.block_length 
+            for pos in self.block_unmask_positions
+        ])
+        
+        # Reset block-level tracking
+        self.block_log_probs = []
+        self.block_unmask_positions = []
+        
+        # Advance block index
+        self.current_block_idx += 1
+
     def __len__(self):
         return self.num_tokens
 

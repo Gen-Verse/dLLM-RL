@@ -16,3 +16,6 @@ class SamplingParams:
     topp: float = 1
     remasking_strategy: Literal['sequential', 'low_confidence_static', 'low_confidence_dynamic', 'entropy_bounded'] = 'low_confidence_static'
     stop_words: list[int] | None = None
+
+    # If True, use oracle unmasking for PPL
+    eval_mode: bool = False 
