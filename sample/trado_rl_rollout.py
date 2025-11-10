@@ -39,7 +39,7 @@ def get_config():
 
 # obtain prompt
 def get_prompt(data_i):
-    return Template(system_prompts).render(problem = data_i["question"])
+    return Template(system_prompts, keep_trailing_newline=True).render(problem = data_i["question"])
 
 def extract_final_boxed_answer(s: str):
     tag = r'\boxed{'
