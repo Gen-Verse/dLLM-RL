@@ -44,8 +44,8 @@ rollout:
     num_task_per_step: 56
     num_response_per_task: 8
     temperature: 0.8
-    steps: 1024
-    max_gen_length: 1024
+    steps: 512
+    max_gen_length: 512
     batch_size: 2
     remasking_strategy: "low_confidence_dynamic" #"low_confidence_static""low_confidence_dynamic"
     target: "confidence" # target to decide which tokens to unmask, eg. confidence, margin_confidence and neg_entropy
@@ -103,8 +103,8 @@ evaluation:
     data_type: "math" # "math" "code"
     num_response_per_task: 3
     temperature: 0.1
-    steps: 1024
-    max_gen_length: 1024
+    steps: 512
+    max_gen_length: 512
     batch_size: 2
     remasking_strategy: ["low_confidence_static", "low_confidence_dynamic"] #"low_confidence_static""low_confidence_dynamic"
     target: "confidence" # target to decide which tokens to unmask, eg. confidence, margin_confidence and neg_entropy
