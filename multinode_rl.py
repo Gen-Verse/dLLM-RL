@@ -216,17 +216,66 @@ if __name__ == "__main__":
             p.wait()
         print("All train nodes finished.")
 
+    
 
 
-    def init_value_model(epoch, model_base, cfg):
+
+
+    def process_reward(worker_hosts, epoch, cfg):
         project = cfg.experiment.project
-        if model_base == "sdar":
-            script_name = "init_sdar_value_model.py"
-        elif model_base == "trado":
-            script_name = "init_trado_value_model.py"
+
+        # --- Step A: node0 preprocess ---
+        cmd_div = (
+            env_prefix() +
+            f"cd {BASE_DIR}/reward && "
+            f"python rl_process_divide_data.py "
+            f"config=../configs/{project}.yaml "
+            f"experiment.current_epoch={epoch}"
+        )
+        run_local(cmd_div)
+        print("[OK] rl_process_divide_data.py (node0) done.")
+
+        # --- Step B: multinode LLM rewarding ---
+        procs = []
+        for idx, host in enumerate(worker_hosts):
+            cmd_llm = (
+                env_prefix() +
+                f"cd {BASE_DIR}/sample && "
+                f"python llm_process_reward.py "
+                f"config=../configs/{project}.yaml "
+                f"experiment.current_epoch={epoch} "
+                f"experiment.node_index={idx}"
+            )
+            if idx == 0:
+                procs.append(run_local_async(cmd_llm))
+            else:
+                procs.append(run_remote_async(host, cmd_llm))
+            print(f"[DISPATCH] llm_process_reward node {idx} → {host}")
+        for p in procs:
+            p.wait()
+        print("[OK] llm_process_reward.py (all nodes) done.")
+
+        # --- Step C: node0 aggregate ---
+        aggregate(epoch, cfg, "train")
+        print("[OK] aggregation done.")
+
+        # --- Step D: node0 final process ---
+        cmd_fin = (
+            env_prefix() +
+            f"cd {BASE_DIR}/reward && "
+            f"python rl_process_reward.py "
+            f"config=../configs/{project}.yaml "
+            f"experiment.current_epoch={epoch}"
+        )
+        run_local(cmd_fin)
+        print("[OK] rl_process_reward.py (node0) done.")
+
+
+    def init_value_model(epoch, cfg):
+        project = cfg.experiment.project
         full_cmd = env_prefix() + (
             f"cd {BASE_DIR}/train && "
-            f"python {script_name} "
+            f"python init_sdar_value_model.py "
             f"config=../configs/{project}.yaml "
             f"experiment.current_epoch={epoch}"
         )
@@ -256,8 +305,6 @@ if __name__ == "__main__":
     import time
     time.sleep(10)
 
-    model_base = cfg.model.model_base
-
     if cfg.experiment.start_from_scratch:
         os.makedirs(f"{project}/results", exist_ok=True)
         optimized = f"../{project}/ckpt/{cfg.model.optimized_name}"
@@ -274,7 +321,7 @@ if __name__ == "__main__":
         )
         begin_with(path)
         if have_value_model:
-            init_value_model(1, model_base, cfg)
+            init_value_model(1, cfg)
             optimized_value = f"../{project}/ckpt/{cfg.model.optimized_value_name}"
             path = (
                 f"{project}/results/results-rl-"
@@ -286,11 +333,16 @@ if __name__ == "__main__":
 
     epoch = cfg.experiment.current_epoch
 
-    
+    model_base = cfg.model.model_base
     if cfg.dataset.data_type == "code":
         is_code_task = True
     else:
         is_code_task = False
+    
+    if OmegaConf.select(cfg, "model.process_reward_model", default=MISSING) is not MISSING and cfg.model.process_reward_model is not None:
+        is_process_reward = True
+    else:
+        is_process_reward = False
     
     while epoch <= total_step:
         print(f"\n========== epoch {epoch} ==========")
@@ -300,7 +352,11 @@ if __name__ == "__main__":
         if is_code_task:
             execute(worker_hosts, epoch, cfg, "train")
         aggregate(epoch, cfg, "train")
-        reward(epoch, cfg, "train", is_code_task)
+
+        if is_process_reward:
+            process_reward(worker_hosts, epoch, cfg)
+        else:
+            reward(epoch, cfg, "train", is_code_task)
 
         if have_value_model:
             train(worker_hosts, epoch, cfg, model_base, target = "value")
@@ -339,5 +395,5 @@ if __name__ == "__main__":
                         execute(worker_hosts, epoch, cfg, "evaluation")
                     aggregate(epoch, cfg, "evaluation")
                     reward(epoch, cfg, "evaluation", is_code_task, block_size = block_size, top_k = top_k, remasking_strategy = remasking_strategy)
-
+            
         epoch += 1
