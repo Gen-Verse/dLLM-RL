@@ -1,0 +1,124 @@
+wandb:
+  entity: null
+  resume: 'auto'
+
+# only need to be set when using multi-nodes
+system:
+    HTTP_PROXY: "http://xxx.xx.xxx.xxx:xxxx" # your proxy, if don't need, set to null
+    HF_HOME: "/abs/path/of/HF_HOME" # the absolute path of HF_HOME, if using default, set to null
+    env_name: "env_name" # the env name, needed 
+    envs_dir: "/abs/path/of/envs" # if using default, set to null
+    base_dir: "/abs/path/of/DLLM-RL" # the working directory
+
+
+experiment:
+    project: "multinode_rl_trado_process_reward_rlhf_with_value" # need to be same of this file name
+    function: "train"
+    start_from_scratch: True
+    total_step: 100
+    save_every: 30
+    eval_every: 5
+    train_value_every: 1
+    current_epoch: 1
+    deepspeed_file: "4_node_8_gpus_deepspeed_zero3"
+    num_node: 4
+    node_index: 0
+
+model:
+    pretrained_model: "/abs/path/of/model" # absolute path of your model
+    value_base_model: "/abs/path/of/model" # absolute path of your model
+    optimized_name: "optimized"
+    optimized_value_name: "optimized_value"
+    process_reward_model: "/abs/path/of/reward/model" # absolute path of your reward model, we highly suggest using long-cot model like Qwen3 8B/4B
+    model_base: "trado"
+
+
+dataset:
+    train_dataset: "dataset_name" # "MATH_train" "PrimeIntellect"
+    optimization_data: "rl_data"
+    data_type: "math" # "math" "code"
+
+
+rollout:
+    tensor_parallel_size: 1
+    max_active: 256
+    num_task_per_step: 32
+    num_response_per_task: 16
+    temperature: 1.0
+    max_token: 2000
+    block_size: 4
+    denoising_steps_per_block: 4
+    top_p: 1.0
+    top_k: 0
+    remasking_strategy: "low_confidence_dynamic" #"low_confidence_static""low_confidence_dynamic"
+    dynamic_threshold: 0.9 # no use for "low_confidence_static"
+    start_with_think: False
+    reward_model:
+        reward_chunk_length: 200 # give a process reward to each chunk, this key defines the chunk length
+        k_sample: 3 # how many reward rollout for each chunk, you can use mean/consistency method to aggregate the rewards, see details in llm_process_reward.py
+        max_model_len: 15000
+        max_generation_token: 10000
+        temperature: 0.6
+
+execute:
+    num_chunk: 128 # batch size of executing codes in coding eval tasks
+
+training:
+    gradient_checkpointing_enable: True
+    gradient_accumulation_steps: 8
+    batch_size_lm: 1
+    mixed_precision: "bf16"
+    enable_tf32: True
+    seed: 10086
+    num_train_epochs: 1
+    max_grad_norm: 1.0
+    method: "TraceRL"
+    block_size: 4
+    shrink: 1
+    post_num: 0
+    max_gen_length: 2000
+    max_prompt_len: 784
+    eps: 0.20
+    beta: 0.01
+    gam: 0.99
+    lam: 1.0
+    use_kl_estimator_k3: True
+
+
+optimizer:
+    name: adamw
+    params: # default adamw params
+        policy_learning_rate: 1e-6
+        value_learning_rate: 5e-6
+        scale_lr: False # scale learning rate by total batch size
+        beta1: 0.9
+        beta2: 0.999
+        weight_decay: 0.0
+        epsilon: 1e-8
+
+
+lr_scheduler:
+    scheduler: "cosine"
+    params:
+        learning_rate: ${optimizer.params.policy_learning_rate}
+        warmup_steps: 0
+        min_lr_scale: 1.0
+
+
+evaluation:
+    eval_dataset: "MATH500" # "MATH500" "LiveCodeBench"
+    data_type: "math" # "math" "code"
+    tensor_parallel_size: 1
+    max_active: 256
+    num_response_per_task: 3
+    temperature: 1.0
+    max_token: 2000
+    block_size: 4
+    denoising_steps_per_block: 4
+    top_p: 1.0
+    top_k: [0, 1]
+    remasking_strategy: ["low_confidence_dynamic", "low_confidence_static"] #"low_confidence_static""low_confidence_dynamic"
+    dynamic_threshold: 0.9 # no use for "low_confidence_static"
+    start_with_think: False
+
+
