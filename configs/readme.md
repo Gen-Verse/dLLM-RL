@@ -130,6 +130,8 @@ For model with large block size, use `max_active` smaller, like 16 for block siz
 
 If you have stagnation during inference, decrease `max_active`.
 
+When you are using process reward/rlhf for trado or sdar models, make sure your environment support vllm and jetengine at the same time. One example usage: vllm==0.8.5.post1, torch==2.6.0, python3.10, triton==3.2.0, flash-attn==2.7.4.post1, flashinfer-python==0.3.1
+
 If you find RL training not stable, a common issue for RL, try increase `gradient_accumulation_steps`, `num_task_per_step`, and `num_response_per_task`. Note that in Open-Reaonser-Zero's experiments for llm, even using `gradient_update_step=1` (number of training/update step per RL step), `num_task_per_step=128` and `num_response_per_task=64` with GRPO, the training can be potentially instable (they use value model to stablize).
 
 
