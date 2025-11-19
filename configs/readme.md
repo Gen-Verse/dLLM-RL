@@ -34,10 +34,10 @@ For LLaDA and MMaDA, use `sft_llada.yaml`.
 ### RL:
 
 For TraDo models, use `rl_trado.yaml` or `multinode_rl_trado.yaml`. 
-If use value model, use `rl_trado_with_value.yaml` or `multinode_rl_trado_with_value.yaml`. 
+If use value model, use `rl_trado_with_value.yaml` or `multinode_rl_trado_with_value.yaml`. For process reward and RLHF, use `rl_trado_process_reward_rlhf_with_value.yaml` or `multinode_rl_trado_process_reward_rlhf_with_value.yaml`.
 
 For SDAR models, use `rl_sdar.yaml` or `multinode_rl_sdar.yaml`. 
-If use value model, use `rl_sdar_with_value.yaml` or `multinode_rl_sdar_with_value.yaml`. 
+If use value model, use `rl_sdar_with_value.yaml` or `multinode_rl_sdar_with_value.yaml`. For process reward and RLHF, use `rl_sdar_process_reward_rlhf_with_value.yaml` or `multinode_rl_sdar_process_reward_rlhf_with_value.yaml`.
 
 For dream and diffu-coder, use `sft_dream.yaml` or `multinode_rl_dream.yaml`. 
 
