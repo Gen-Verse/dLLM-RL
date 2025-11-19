@@ -27,14 +27,10 @@ if __name__ == "__main__":
         with open(file_name, "w") as f:
             f.write("")
     
-    def init_value_model(i, model_base, cfg):
+    def init_value_model(i, cfg):
         project_name = cfg.experiment.project
-        if model_base == "sdar":
-            script_name = "init_sdar_value_model.py"
-        elif model_base == "trado":
-            script_name = "init_trado_value_model.py"
         subprocess.run(
-            f'python {script_name} '
+            f'python init_sdar_value_model.py '
             f'config=../configs/{project_name}.yaml '
             f'experiment.current_epoch={i} ',
             shell=True,
@@ -48,7 +44,7 @@ if __name__ == "__main__":
         begin_with(f"{project_name}/results/results-rl-" + optimized_model.replace("/", ".") + "-" + config.dataset.train_dataset + ".txt")
         begin_with(f"{project_name}/results/results-eval-" + optimized_model.replace("/", ".") + "-" + config.dataset.train_dataset + ".txt")
         if have_value_model:
-            init_value_model(1, model_base, config)
+            init_value_model(1, config)
             optimized_value_model = "../" + project_name + "/ckpt/" + config.model.optimized_value_name
             begin_with(f"{project_name}/results/results-rl-" + optimized_value_model.replace("/", ".") + "-" + config.dataset.train_dataset + ".txt")
     
@@ -91,6 +87,17 @@ if __name__ == "__main__":
             cwd='reward',
             check=True,
         )
+    
+    
+    def process_reward(i):
+        cfg_i = f"config=../configs/{project_name}.yaml"
+        ep    = f"experiment.current_epoch={i}"
+
+        base = ["conda", "run", "-n", "CURE2", "--no-capture-output", "python", "-u"]
+
+        subprocess.run(base + ["rl_process_divide_data.py", cfg_i, ep], cwd="reward", check=True)
+        subprocess.run(base + ["llm_process_reward.py",    cfg_i, ep], cwd="sample", check=True)
+        subprocess.run(base + ["rl_process_reward.py",     cfg_i, ep], cwd="reward", check=True)
     
     def execute(i, type):
         subprocess.run(
@@ -145,6 +152,11 @@ if __name__ == "__main__":
     else:
         is_code_task = False
     
+    if OmegaConf.select(config, "model.process_reward_model", default=MISSING) is not MISSING and config.model.process_reward_model is not None:
+        is_process_reward = True
+    else:
+        is_process_reward = False
+
     i = config.experiment.current_epoch
 
     while i <= config.experiment.total_step:
@@ -153,7 +165,11 @@ if __name__ == "__main__":
         sample(i, "train")
         if is_code_task:
             execute(i, "train")
-        reward(i, "train", is_code_task)
+        
+        if is_process_reward:
+            process_reward(i)
+        else:
+            reward(i, "train", is_code_task)
 
         if have_value_model:
             train(i, target = "value")
@@ -162,7 +178,7 @@ if __name__ == "__main__":
             train(i, target = None)
 
         if i % config.experiment.eval_every == 0:
-            if model_base in ["sdar", "trado"]:
+            if model_base == "sdar":
                 remasking_strategy_list = config.evaluation.remasking_strategy
                 top_k_list = config.evaluation.top_k
                 block_size = config.evaluation.block_size
