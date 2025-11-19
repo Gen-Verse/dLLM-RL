@@ -60,7 +60,9 @@ class TrainDataset(Dataset):
         L0, L1,                   # Prompt length, response length
         step_map_all,             # (B, L1)    Step map for each original sequence (already shrunk)
         resp_input_ids_all,       # (B, L1)    Response token ids for each original sequence (used for pad/post_num)
-        per_seq_reward,           # (B,)       Scalar reward for each original sequence
+        per_seq_reward,           # (B,)       Scalar reward for each original sequence (outcome reward)
+        per_token_reward_all,     # (B, L1)    for vector mode (process reward)
+        use_vector_reward,
         pad_id, post_num          # Pad token id and post_num
     ):
         self.extended_input_ids = extended_input_ids  # (N_rows, L_ext)
@@ -74,6 +76,8 @@ class TrainDataset(Dataset):
         self.step_map_all = step_map_all.clone().cpu()                   # (B, L1)
         self.resp_input_ids_all = resp_input_ids_all.clone().cpu()       # (B, L1)
         self.per_seq_reward = torch.as_tensor(per_seq_reward, dtype=torch.float32)  # (B,)
+        self.per_token_reward_all = per_token_reward_all.clone().cpu()   # (B, L1)
+        self.use_vector_reward    = bool(use_vector_reward)
         self.pad_id = int(pad_id); self.post_num = int(post_num) if post_num is not None else None
 
         # Old values (predicted by the model during inference)
@@ -108,7 +112,7 @@ def main():
     pretrained_model = "./" + project_name + "/ckpt/" + config.model.optimized_value_name
 
     from transformers import AutoConfig
-    from train.init_trado_value_model import _get_value_model
+    from train.init_sdar_value_model import _get_value_model
     from models import SDARForCausalLM
     value_model_class = _get_value_model(SDARForCausalLM, "value_head")
 
@@ -292,11 +296,10 @@ def main():
     prompt_list = []
     response_list = []
     step_map_list = []
-    reward_list = []
+    reward_scalar_list = []
     for x in dataset_load:
         prompt_list.append(x["prompt"])
         response_list.append(x["response"])
-        reward_list.append(x["reward"])
     
     input_ids_lm, _, start_pos, drop_num = uni_prompting((prompt_list, response_list))
 
@@ -306,6 +309,10 @@ def main():
     L1    = L - L0
     post_num = config.training.post_num
 
+    if isinstance(dataset_load[0]["reward"], (list, tuple, np.ndarray)):
+        use_vector_reward = True
+    else:
+        use_vector_reward = False
 
     for x in dataset_load:
         if "step_map" not in x.keys():
@@ -317,6 +324,16 @@ def main():
             else:
                 step_map_i = step_map_i + [max(step_map_i) + 1] * (L1 - len(step_map_i))
             step_map_list.append(step_map_i)
+            if use_vector_reward:
+                vec_reward_i = x["reward"]
+                if len(vec_reward_i) > L1:
+                    vec_reward_i = vec_reward_i[:L1]
+                else:
+                    vec_reward_i = vec_reward_i + [max(vec_reward_i) + 1] * (L1 - len(vec_reward_i))
+                reward_scalar_list.append(vec_reward_i)
+            else:
+                reward_scalar_list.append(x["reward"])
+
     
     def make_basic_block_attention(
         N: int,
@@ -554,7 +571,7 @@ def main():
 
     
     (extended_input_ids, p_mask, tok_idx_ext, labels, rewards,        # rewards all 0, as place-holder
-        seq_ids_rows, sel_step_tail_rows, step_map_all, resp_input_ids_all) = collect_training_data(input_ids_lm, step_map_list, reward_list)
+        seq_ids_rows, sel_step_tail_rows, step_map_all, resp_input_ids_all) = collect_training_data(input_ids_lm, step_map_list, reward_scalar_list)
 
 
     
@@ -564,7 +581,9 @@ def main():
         L0=start_pos, L1=(labels.shape[1]-start_pos),
         step_map_all=step_map_all,
         resp_input_ids_all=resp_input_ids_all,
-        per_seq_reward=torch.as_tensor(reward_list, dtype=torch.float32),
+        per_seq_reward=torch.as_tensor(reward_scalar_list, dtype=torch.float32),
+        per_token_reward_all=torch.as_tensor(reward_scalar_list, dtype=torch.float32),                                 
+        use_vector_reward=use_vector_reward,                                       
         pad_id=pad_id, post_num=post_num
     )
 
@@ -650,7 +669,7 @@ def main():
             if accelerator.num_processes > 1:
                 ids_dev   = ids.to(accelerator.device)
                 ids_pad    = accelerator.pad_across_processes(ids_dev, dim=0, pad_index=-1)
-                values_pad = accelerator.pad_across_processes(values,  dim=0)  
+                values_pad = accelerator.pad_across_processes(values,  dim=0)
 
                 ids_all    = accelerator.gather(ids_pad)
                 values_all = accelerator.gather(values_pad)
@@ -741,16 +760,23 @@ def main():
             else:
                 cum_pad = torch.cumsum(is_pad.int(), dim=0)
                 trainable_mask = (~is_pad) | (is_pad & (cum_pad <= dataset.post_num))
+            
+            if dataset.use_vector_reward:
+                # process reward
+                # per-step vector rewards: 后面会做按 step 聚合(取均值)，所以这里只需逐token
+                r_resp = dataset.per_token_reward_all[s].clone()  # (L1,)
+                # 不可训练位置（pad或超过post_num）清零
+                r_resp[~trainable_mask] = 0.0
+            else:
+                # RLVR reward is only given to tokens in the “last trainable trace step”
+                # Find the maximum step id in the trainable region
+                valid_steps = step_map_s[trainable_mask]
+                assert valid_steps.numel() > 0, f"sequence {s}: no trainable tokens"
+                last_step_id = int(valid_steps.max().item())
 
-            # RLVR reward is only given to tokens in the “last trainable trace step”
-            # Find the maximum step id in the trainable region
-            valid_steps = step_map_s[trainable_mask]
-            assert valid_steps.numel() > 0, f"sequence {s}: no trainable tokens"
-            last_step_id = int(valid_steps.max().item())
-
-            # Token-level immediate reward r_j
-            r_resp = torch.zeros(L1, dtype=torch.float32)
-            r_resp[(step_map_s == last_step_id) & trainable_mask] = dataset.per_seq_reward[s].item()
+                # Token-level immediate reward r_j
+                r_resp = torch.zeros(L1, dtype=torch.float32)
+                r_resp[(step_map_s == last_step_id) & trainable_mask] = dataset.per_seq_reward[s].item()
 
             # Aggregate token-level V^{old} from fragment rows
             V_resp = torch.zeros(L1, dtype=torch.float32)
@@ -830,42 +856,44 @@ def main():
                 Return_mat[row][pm] = R_full[pm]
                 adv_mat[row][pm]    = A_full[pm]
 
-            # Assertion 1: when gamma=lambda=1,
-            # R_j equals the sequence reward, and A_j = R_j - V_j^{old}
-            if abs(gamma - 1.0) < 1e-8 and abs(lam - 1.0) < 1e-8:
-                expected = dataset.per_seq_reward[s].item()
-                for row in rows:
-                    pm = dataset.p_mask[row]
-                    R_row = Return_mat[row][pm]
-                    V_row = old_vals[row][pm]
-                    A_row = adv_mat[row][pm]
-                    assert torch.allclose(R_row, torch.full_like(R_row, expected), atol=atol), \
-                        f"gamma=lambda=1 check failed (R) at seq {s}, row {row}"
-                    assert torch.allclose(A_row, R_row - V_row, atol=atol), \
-                        f"gamma=lambda=1 check failed (A=R-V) at seq {s}, row {row}"
+            if not dataset.use_vector_reward:
+                # Assertion 1: when gamma=lambda=1,
+                # R_j equals the sequence reward, and A_j = R_j - V_j^{old}
+                if abs(gamma - 1.0) < 1e-8 and abs(lam - 1.0) < 1e-8:
+                    expected = dataset.per_seq_reward[s].item()
+                    for row in rows:
+                        pm = dataset.p_mask[row]
+                        R_row = Return_mat[row][pm]
+                        V_row = old_vals[row][pm]
+                        A_row = adv_mat[row][pm]
+                        assert torch.allclose(R_row, torch.full_like(R_row, expected), atol=atol), \
+                            f"gamma=lambda=1 check failed (R) at seq {s}, row {row}"
+                        assert torch.allclose(A_row, R_row - V_row, atol=atol), \
+                            f"gamma=lambda=1 check failed (A=R-V) at seq {s}, row {row}"
+                
+                # Assertion 2: when gamma=1, lambda=0,
+                # A_j = r_j - V_j^{old} + V_{t_j+1}^{*,old}
+                if abs(gamma - 1.0) < 1e-8 and abs(lam - 0.0) < 1e-8:
+                    # For each trainable position, construct “next-step mean V_next^{*,old}”
+                    V_next_resp = torch.zeros(L1, dtype=torch.float32)
+                    for sid in uniq_steps.tolist():
+                        i = step_to_rank[int(sid)]
+                        mask = (step_map_s == int(sid)) & trainable_mask
+                        if i + 1 < S:
+                            V_next_resp[mask] = V_star[i + 1]
+                        # else remains 0 (for the last step)
+
+                    expected_A_resp = (r_resp - V_resp) + V_next_resp
+                    A_expected_full = torch.zeros(L0 + L1, dtype=torch.float32)
+                    A_expected_full[L0:] = expected_A_resp
+
+                    for row in rows:
+                        pm = dataset.p_mask[row]
+                        A_row = adv_mat[row][pm]
+                        A_row_expected = A_expected_full[pm]
+                        assert torch.allclose(A_row, A_row_expected, atol=atol), \
+                            f"gamma=1, lambda=0 check failed (A=r-V+V_next*) at seq {s}, row {row}"
             
-            # Assertion 2: when gamma=1, lambda=0,
-            # A_j = r_j - V_j^{old} + V_{t_j+1}^{*,old}
-            if abs(gamma - 1.0) < 1e-8 and abs(lam - 0.0) < 1e-8:
-                # For each trainable position, construct “next-step mean V_next^{*,old}”
-                V_next_resp = torch.zeros(L1, dtype=torch.float32)
-                for sid in uniq_steps.tolist():
-                    i = step_to_rank[int(sid)]
-                    mask = (step_map_s == int(sid)) & trainable_mask
-                    if i + 1 < S:
-                        V_next_resp[mask] = V_star[i + 1]
-                    # else remains 0 (for the last step)
-
-                expected_A_resp = (r_resp - V_resp) + V_next_resp
-                A_expected_full = torch.zeros(L0 + L1, dtype=torch.float32)
-                A_expected_full[L0:] = expected_A_resp
-
-                for row in rows:
-                    pm = dataset.p_mask[row]
-                    A_row = adv_mat[row][pm]
-                    A_row_expected = A_expected_full[pm]
-                    assert torch.allclose(A_row, A_row_expected, atol=atol), \
-                        f"gamma=1, lambda=0 check failed (A=r-V+V_next*) at seq {s}, row {row}"
 
         # write back to data
         dataset.Return = Return_mat
