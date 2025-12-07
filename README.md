@@ -2,7 +2,7 @@
   <br>
   <img src="assets/title.png" width="200">
   <h3>Revolutionizing Reinforcement Learning Framework for Diffusion Large Language Models</h3>
-  <p><i>The most comprehensive framework for dLLM's post-training</i></p>
+  <h4>The most comprehensive framework for dLLM's post-training</h4>
 </div>
 
 
