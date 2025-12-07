@@ -1,0 +1,162 @@
+[
+    {
+        "ground_truth_answer": "A",
+        "image": "SEEDBench_IMG/0.jpg",
+        "question": "How many towels are in the image?Select the correct answer from options A, B, C, or D. Respond with only the letter (A, B, C, or D).\nA.One\nB.Two\nC.Three\nD.Four"
+    },
+    {
+        "ground_truth_answer": "C",
+        "image": "SEEDBench_IMG/1.jpg",
+        "question": "What type of building is in the image?Select the correct answer from options A, B, C, or D. Respond with only the letter (A, B, C, or D).\nA.A hotel\nB.A house\nC.A cabin\nD.A shed"
+    },
+    {
+        "ground_truth_answer": "C",
+        "image": "SEEDBench_IMG/2.jpg",
+        "question": "What is the man in the suit doing in the image?Select the correct answer from options A, B, C, or D. Respond with only the letter (A, B, C, or D).\nA.Standing with his arms crossed\nB.Holding a cell phone\nC.Taking a picture\nD.Talking to someone"
+    },
+    {
+        "ground_truth_answer": "A",
+        "image": "SEEDBench_IMG/3.jpg",
+        "question": "What is the color of the chair seen on the right side of the image?Select the correct answer from options A, B, C, or D. Respond with only the letter (A, B, C, or D).\nA.White\nB.Black\nC.Gray\nD.Brown"
+    },
+    {
+        "ground_truth_answer": "D",
+        "image": "SEEDBench_IMG/4.jpg",
+        "question": "How many people are present in the image?Select the correct answer from options A, B, C, or D. Respond with only the letter (A, B, C, or D).\nA.One\nB.Two\nC.Three\nD.Four"
+    },
+    {
+        "ground_truth_answer": "B",
+        "image": "SEEDBench_IMG/5.jpg",
+        "question": "How many men are on the airplane in the image?Select the correct answer from options A, B, C, or D. Respond with only the letter (A, B, C, or D).\nA.One\nB.Two\nC.Three\nD.Four"
+    },
+    {
+        "ground_truth_answer": "D",
+        "image": "SEEDBench_IMG/6.jpg",
+        "question": "What type of beard does one of the men in the car have?Select the correct answer from options A, B, C, or D. Respond with only the letter (A, B, C, or D).\nA.Full\nB.Stubble\nC.Goatee\nD.nan"
+    },
+    {
+        "ground_truth_answer": "B",
+        "image": "SEEDBench_IMG/7.jpg",
+        "question": "Which of the following objects are not detected in the image?Select the correct answer from options A, B, C, or D. Respond with only the letter (A, B, C, or D).\nA.Mouth\nB.Floor\nC.Ear\nD.Toy"
+    },
+    {
+        "ground_truth_answer": "D",
+        "image": "SEEDBench_IMG/8.jpg",
+        "question": "What is the relation between the soccer player and the football player?Select the correct answer from options A, B, C, or D. Respond with only the letter (A, B, C, or D).\nA.They are teammates\nB.Cannot be determined\nC.They are not interacting\nD.They are opponents"
+    },
+    {
+        "ground_truth_answer": "B",
+        "image": "SEEDBench_IMG/9.jpg",
+        "question": "What is the predominant color of the sand on the beach?Select the correct answer from options A, B, C, or D. Respond with only the letter (A, B, C, or D).\nA.White\nB.Brown\nC.Black\nD.Gray"
+    },
+    {
+        "ground_truth_answer": "D",
+        "image": "SEEDBench_IMG/10.jpg",
+        "question": "What is in the background of the image?Select the correct answer from options A, B, C, or D. Respond with only the letter (A, B, C, or D).\nA.A cloudy sky\nB.A clear blue sky\nC.Trees and mountains\nD.Buildings and houses"
+    },
+    {
+        "ground_truth_answer": "C",
+        "image": "SEEDBench_IMG/11.jpg",
+        "question": "How many people are in the image?Select the correct answer from options A, B, C, or D. Respond with only the letter (A, B, C, or D).\nA.Three\nB.Two\nC.One\nD.Four"
+    },
+    {
+        "ground_truth_answer": "B",
+        "image": "SEEDBench_IMG/12.jpg",
+        "question": "What is the main event taking place in the image?Select the correct answer from options A, B, C, or D. Respond with only the letter (A, B, C, or D).\nA.A group of people playing soccer in a park\nB.A crowd of people watching a live music performance\nC.A group of people attending a political rally\nD.A street performer playing music while people pass by"
+    },
+    {
+        "ground_truth_answer": "A",
+        "image": "SEEDBench_IMG/13.jpg",
+        "question": "What is the man wearing in the image?Select the correct answer from options A, B, C, or D. Respond with only the letter (A, B, C, or D).\nA.A suit and tie\nB.A casual t-shirt\nC.A Hawaiian shirt\nD.A sweater and jeans"
+    },
+    {
+        "ground_truth_answer": "D",
+        "image": "SEEDBench_IMG/14.jpg",
+        "question": "Which object in the image has an attribute of \"leather\"?Select the correct answer from options A, B, C, or D. Respond with only the letter (A, B, C, or D).\nA.Guitar\nB.Microphone\nC.Arm\nD.Shoe"
+    },
+    {
+        "ground_truth_answer": "C",
+        "image": "SEEDBench_IMG/15.jpg",
+        "question": "Which bird species is not present in the image?Select the correct answer from options A, B, C, or D. Respond with only the letter (A, B, C, or D).\nA.Sparrows\nB.Hummingbirds\nC.None of the above\nD.White doves"
+    },
+    {
+        "ground_truth_answer": "D",
+        "image": "SEEDBench_IMG/16.jpg",
+        "question": "What is the main focus of the image?Select the correct answer from options A, B, C, or D. Respond with only the letter (A, B, C, or D).\nA.A bedroom\nB.A kitchen\nC.A living room\nD.A dining room"
+    },
+    {
+        "ground_truth_answer": "C",
+        "image": "SEEDBench_IMG/17.jpg",
+        "question": "What is the focus of the image?Select the correct answer from options A, B, C, or D. Respond with only the letter (A, B, C, or D).\nA.The gift bag and candy canes in the foreground.\nB.The full moon in the background.\nC.The character on a plane with a bag of presents.\nD.The red heart with white letters."
+    },
+    {
+        "ground_truth_answer": "D",
+        "image": "SEEDBench_IMG/18.jpg",
+        "question": "What is the color of the man's suit?Select the correct answer from options A, B, C, or D. Respond with only the letter (A, B, C, or D).\nA.Black\nB.White\nC.Gray\nD.Beige"
+    },
+    {
+        "ground_truth_answer": "B",
+        "image": "SEEDBench_IMG/19.jpg",
+        "question": "What type of furniture is located in the center of the room in the image?Select the correct answer from options A, B, C, or D. Respond with only the letter (A, B, C, or D).\nA.Coffee table\nB.Desk\nC.Dining table\nD.Side table"
+    },
+    {
+        "ground_truth_answer": "C",
+        "image": "SEEDBench_IMG/20.jpg",
+        "question": "What objects are in the room besides the people and the guitar?Select the correct answer from options A, B, C, or D. Respond with only the letter (A, B, C, or D).\nA.Bicycle\nB.Television\nC.All of the above\nD.Window"
+    },
+    {
+        "ground_truth_answer": "A",
+        "image": "SEEDBench_IMG/21.jpg",
+        "question": "How does the water appear in the image?Select the correct answer from options A, B, C, or D. Respond with only the letter (A, B, C, or D).\nA.Crystal clear\nB.Muddy and murky\nC.Blue and calm\nD.Rough and wavy"
+    },
+    {
+        "ground_truth_answer": "C",
+        "image": "SEEDBench_IMG/22.jpg",
+        "question": "What is the spatial relation between the man's hair and his beard?Select the correct answer from options A, B, C, or D. Respond with only the letter (A, B, C, or D).\nA.The man's hair and beard are the same length\nB.The man's beard is longer than his hair\nC.The man's hair is longer than his beard\nD.The man has no beard"
+    },
+    {
+        "ground_truth_answer": "D",
+        "image": "SEEDBench_IMG/23.jpg",
+        "question": "How is the woman with blonde hair positioned in the image?Select the correct answer from options A, B, C, or D. Respond with only the letter (A, B, C, or D).\nA.Jumping\nB.Sitting\nC.Lying down\nD.Standing"
+    },
+    {
+        "ground_truth_answer": "C",
+        "image": "SEEDBench_IMG/24.jpg",
+        "question": "What is the primary natural element in the image?Select the correct answer from options A, B, C, or D. Respond with only the letter (A, B, C, or D).\nA.A mountain\nB.The sky\nC.A river\nD.A tree"
+    },
+    {
+        "ground_truth_answer": "A",
+        "image": "SEEDBench_IMG/25.jpg",
+        "question": "What is the main focus of the image?Select the correct answer from options A, B, C, or D. Respond with only the letter (A, B, C, or D).\nA.A couple in the center\nB.A bench in the foreground\nC.A tree in the background\nD.The sky in the distance"
+    },
+    {
+        "ground_truth_answer": "A",
+        "image": "SEEDBench_IMG/26.jpg",
+        "question": "What is the position of the red car in the image?Select the correct answer from options A, B, C, or D. Respond with only the letter (A, B, C, or D).\nA.Centered in the middle of the image\nB.In the foreground, left side of the image\nC.In the background, right side of the image\nD.Cannot be determined"
+    },
+    {
+        "ground_truth_answer": "A",
+        "image": "SEEDBench_IMG/27.jpg",
+        "question": "What is the prominent feature of the image?Select the correct answer from options A, B, C, or D. Respond with only the letter (A, B, C, or D).\nA.The tall skyscrapers in the city skyline\nB.The boats and ships in the dock\nC.The clock tower\nD.The large body of water in front of the city"
+    },
+    {
+        "ground_truth_answer": "D",
+        "image": "SEEDBench_IMG/28.jpg",
+        "question": "Which of the following objects is not detected in the image?Select the correct answer from options A, B, C, or D. Respond with only the letter (A, B, C, or D).\nA.Rock\nB.Window\nC.Grass\nD.Bench"
+    },
+    {
+        "ground_truth_answer": "C",
+        "image": "SEEDBench_IMG/29.jpg",
+        "question": "Are there any animals visible in the image?Select the correct answer from options A, B, C, or D. Respond with only the letter (A, B, C, or D).\nA.Yes\nB.Cannot determine from the given information\nC.No\nD.None of the above"
+    },
+    {
+        "ground_truth_answer": "D",
+        "image": "SEEDBench_IMG/30.jpg",
+        "question": "What type of room is the image taken in?Select the correct answer from options A, B, C, or D. Respond with only the letter (A, B, C, or D).\nA.Living room\nB.Bathroom\nC.Kitchen\nD.Classroom"
+    },
+    {
+        "ground_truth_answer": "A",
+        "image": "SEEDBench_IMG/31.jpg",
+        "question": "Which of the following objects is NOT present in the image?Select the correct answer from options A, B, C, or D. Respond with only the letter (A, B, C, or D).\nA.A river\nB.A pine tree\nC.A wooden bench\nD.A dirt road"
+    }
+]
