@@ -35,10 +35,11 @@
 
 ## 🌱 Features 
 
-- **Model Support**: [TraDo](https://arxiv.org/abs/2509.06949), [SDAR](https://github.com/JetAstra/SDAR), [Dream](https://github.com/DreamLM/Dream), [LLaDA](https://github.com/ML-GSAI/LLaDA), [MMaDA](https://github.com/Gen-Verse/MMaDA), [Diffu-Coder](https://github.com/apple/ml-diffucoder) We support models with diverse structures, including full attention models, adapted models, and block attention models.
-- **Inference Acceleration**: improved [KV-cache](https://github.com/NVlabs/Fast-dLLM/tree/main), [jetengine](https://github.com/Labman42/JetEngine/tree/0ddc55ad3fb712b6374515b78d656f420e1a7243) (based on nano-vllm), different sampling strategies, support multi-nodes, easy to build your own accelerated inference methods
+- **Model Support**: [TraDo](https://arxiv.org/abs/2509.06949), [SDAR](https://github.com/JetAstra/SDAR), [Dream](https://github.com/DreamLM/Dream), [LLaDA](https://github.com/ML-GSAI/LLaDA), [MMaDA](https://github.com/Gen-Verse/MMaDA), [LLaDA-V](https://github.com/ML-GSAI/LLaDA-V), and [Diffu-Coder](https://github.com/apple/ml-diffucoder) Almost all open-sourced discrete diffusion language models are supported here.
+- **Diverse Settings** We support deployment, SFT, RL (with optional value model for variance reduction and process reward model for fine-grained supervision), and RLHF across diverse settings (math, coding, multimodal), and different architectures (both full/block attention dLLMs).
+- **Inference Acceleration**: improved [KV-cache](https://github.com/NVlabs/Fast-dLLM/tree/main), [jetengine](https://github.com/Labman42/JetEngine/tree/0ddc55ad3fb712b6374515b78d656f420e1a7243) (based on nano-vllm), different sampling strategies, support multi-nodes, easy to build your own accelerated inference methods.
 - **RL Training**: [TraceRL (support diffusion value model)](https://arxiv.org/abs/2509.06949), [coupled RL](https://github.com/apple/ml-diffucoder), [random masking RL](https://github.com/Gen-Verse/MMaDA), accelerated sampling, including Math, coding, and general RL tasks, support multi-nodes, easy to build your reinforcement learning methods across diverse settings
-- **SFT**: [Block SFT](https://github.com/kuleshov-group/bd3lms), semi-AR SFT, random masking SFT, support multi-nodes and long-CoT finetune
+- **SFT**: [Block SFT](https://github.com/kuleshov-group/bd3lms), semi-AR SFT, random masking SFT, support multi-nodes and long-CoT finetune.
 
 
 
@@ -96,7 +97,7 @@ print(cleaned_text)
 ```
 
 ## 📰 Latest Updates
-* **[2025-11-19]** 🔥 We will support RLHF, fine grained process reward, and multimodal RL/SFT in the next few days!
+* **[2025-12-07]** 🔥 We support RLHF, fine-grained process reward, and multimodal RL/SFT now!
 * **[2025-09-08]** We release our models, [TraDo-4B-Instruct](https://huggingface.co/Gen-Verse/TraDo-4B-Instruct) and [TraDo-8B-Instruct](https://huggingface.co/Gen-Verse/TraDo-8B-Instruct), and the long-CoT diffusion language model [TraDo-8B-Thinking](https://huggingface.co/Gen-Verse/TraDo-8B-Thinking).
 * **[2025-09-08]** We release inference and training (SFT and RL) code compatible with a wide range of diffusion language models, including [TraDo](https://arxiv.org/abs/2509.06949), [SDAR](https://github.com/JetAstra/SDAR), [Dream](https://github.com/DreamLM/Dream), [LLaDA](https://github.com/ML-GSAI/LLaDA), [MMaDA](https://github.com/Gen-Verse/MMaDA), and [Diffu-Coder](https://github.com/apple/ml-diffucoder).
 
@@ -112,6 +113,7 @@ pip install --no-cache-dir \
   https://github.com/Dao-AILab/flash-attention/releases/download/v2.7.4.post1/\
 flash_attn-2.7.4.post1+cu12torch2.6cxx11abiFALSE-cp310-cp310-linux_x86_64.whl
 pip install -r requirements.txt
+# or requirements_v.txt for multimodal settings, see more details in the multimodal section in ./configs
 ```
 
 
@@ -137,6 +139,8 @@ python eval.py config=configs/trado_eval.yaml
 # python eval.py config=configs/sdar_eval.yaml
 # python eval.py config=configs/dream_eval.yaml
 # python eval.py config=configs/llada_eval.yaml
+# python eval_v.py config=configs/lladav_eval.yaml
+# python eval_v.py config=configs/mmada_v_eval.yaml
 # see details in ./configs
 ```
 Use `trado_eval.yaml` for TraDo models' inference, `sdar_eval.yaml` for SDAR, `dream_eval.yaml` for Dream and Diffu-Coder, and `llada_eval.yaml` for LLaDA and MMaDA. Instructions on how to set the configurations are provided in the corresponding configuration files.  
@@ -163,6 +167,8 @@ else
 fi
 # python multinode_eval.py config=configs/trado_longcot_multinode_eval.yaml
 # python multinode_eval.py config=configs/llada_multinode_eval.yaml
+# python multinode_eval_v.py config=configs/lladav_eval.yaml
+# python multinode_eval_v.py config=configs/mmada_v_eval.yaml
 # ...
 ```
 
@@ -176,6 +182,8 @@ python rl.py config=configs/rl_trado.yaml
 # python rl.py config=configs/rl_dream.yaml
 # python rl.py config=configs/rl_llada.yaml
 # python rl.py config=configs/rl_mmada.yaml
+# python rl_v.py config=configs/rl_lladav.yaml
+# python rl_v.py config=configs/rl_mmada_v.yaml
 # see details in ./configs
 ```
 
@@ -201,6 +209,8 @@ fi
 # python multinode_rl.py config=configs/multinode_rl_dream.yaml
 # python multinode_rl.py config=configs/multinode_rl_llada.yaml
 # python multinode_rl.py config=configs/multinode_rl_mmada.yaml
+# python multinode_rl_v.py config=configs/multinode_rl_lladav.yaml
+# python multinode_rl_v.py config=configs/multinode_rl_mmada_v.yaml
 ```
 
 ## 🔧 Supervised Finetuning
@@ -219,6 +229,8 @@ accelerate launch \
 # sft_dream.py, sft_dream.yaml
 # sft_llada.py, sft_llada.yaml
 # sft_mmada.py, sft_mmada.yaml
+# sft_mmada_v.py, sft_mmada_v.yaml
+# sft_lladav.py, sft_lladav.yaml
 # see details in ./configs
 ```
 
