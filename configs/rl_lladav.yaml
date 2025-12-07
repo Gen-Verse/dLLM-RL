@@ -1,0 +1,109 @@
+wandb:
+  entity: null
+  resume: 'auto'
+
+system:
+  HTTP_PROXY: null
+  HF_HOME: null
+  env_name: "env_name"
+  envs_dir: "/abs/path/of/envs"
+  base_dir: "/abs/path/of/dLLM-RL"
+
+experiment:
+  project: "rl_lladav"
+  function: "train"
+  start_from_scratch: True
+  total_step: 160
+  save_every: 10
+  eval_every: 5
+  current_epoch: 1
+  deepspeed_file: "1_node_8_gpus_deepspeed_zero2"
+  num_node: 1
+  node_index: 0
+
+model:
+  pretrained_model: "/abs/path/of/sft-ckpt"
+  optimized_name: "optimized"
+  model_base: "lladav"
+  vq_model_path: "/abs/path/of/magvitv2"  
+  image_resolution: 512
+
+dataset:
+  train_dataset: "SEEDBench_IMG_32"
+  optimization_data: "rl_data"
+  data_type: "mmu"
+  image_root: "/abs/path/of/data/images" 
+
+rollout:
+  num_task_per_step: 128
+  num_response_per_task: 8
+  temperature: 0.8
+  steps: 256
+  max_gen_length: 256
+  batch_size: 1
+  remasking_strategy: "low_confidence_dynamic"
+  target: "confidence"
+  dynamic_threshold: 0.90
+  block_size: 32
+  further_horizon: 128
+  use_cache: True
+
+reward:
+  answer_must_in_box: True
+  strict_len_check: False
+
+execute:
+  num_chunk: 128
+
+training:
+  gradient_accumulation_steps: 128
+  batch_size_lm: 1
+  mixed_precision: "bf16"
+  enable_tf32: True
+  seed: 10086
+  num_train_epochs: 1
+  max_grad_norm: 1.0
+  method: "random_masking" # "random_masking" "TraceRL" "coupled"
+  lower_p: 0.1
+  upper_p: 0.9
+  shrink: 8
+  post_num: 1
+  mask_times_per_sample: 2
+  max_gen_length: ${rollout.max_gen_length}
+  max_prompt_len: 512
+  eps: 0.20
+  beta: 0.01
+  use_kl_estimator_k3: True
+
+optimizer:
+  name: adamw
+  params:
+    learning_rate: 1e-6
+    scale_lr: False
+    beta1: 0.9
+    beta2: 0.999
+    weight_decay: 0.0
+    epsilon: 1e-8
+
+lr_scheduler:
+  scheduler: "cosine"
+  params:
+    learning_rate: ${optimizer.params.learning_rate}
+    warmup_steps: 0
+    min_lr_scale: 1.0
+
+evaluation:
+  if_eval: True
+  eval_dataset: "SEEDBench_IMG_32"
+  data_type: "mmu"
+  num_response_per_task: 3
+  temperature: 0.1
+  steps: 256
+  max_gen_length: 256
+  batch_size: 1
+  remasking_strategy: ["low_confidence_static", "low_confidence_dynamic"]
+  target: "confidence"
+  dynamic_threshold: 0.90
+  block_size: 32
+  further_horizon: 128
+  use_cache: True

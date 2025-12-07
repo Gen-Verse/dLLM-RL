@@ -1,0 +1,38 @@
+experiment:
+    project: "lladav_eval"
+    num_node: 1
+    node_index: 0
+
+system:
+    HTTP_PROXY: null
+    HF_HOME: null
+    env_name: ""
+    envs_dir: "/abs/path/of/envs"
+    base_dir: "/abs/path/of/dLLM-RL"
+
+model: "/abs/path/of/model"
+model_base: "lladav"
+answer_must_in_box: True
+
+dataset:
+    eval_dataset: "SEEDBench_IMG_32"
+    data_type: "mmu"
+    image_root: "/abs/path/of/data/images"
+
+execute:
+    num_chunk: 128
+
+rollout:
+    num_response_per_task: 3
+    temperature: 0.1
+    steps: 128
+    max_gen_length: 128
+    batch_size: 2
+    remasking_strategy: ["low_confidence_static", "low_confidence_dynamic"]
+    target: "confidence"
+    dynamic_threshold: 0.90
+    block_size: 32
+    further_horizon: 128
+    output_unmasking_history: True
+    use_cache: True
+

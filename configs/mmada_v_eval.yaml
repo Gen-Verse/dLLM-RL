@@ -1,0 +1,46 @@
+experiment:
+    project: "mmada_v_eval" # need to be same of this file name
+    num_node: 1 # the number of machines you have
+    node_index: 0 # no need to change
+
+
+# only need to be set when using multi-nodes
+system:
+    HTTP_PROXY: null # your proxy, if don't need, set to null
+    HF_HOME: null # the absolute path of HF_HOME, if using default, set to null
+    env_name: "" # the env name, needed 
+    envs_dir: "/abs/path/of/envs" # if using default, set to null
+    base_dir: "/abs/path/of/dLLM-RL" # the working directory
+
+
+model: "/abs/path/of/model" # absolute path of your model
+model_base: "mmada" # set llada for LLaDA and MMaDA
+vq_model_path: "/abs/path/of/models--showlab--magvitv2" # absolute path of MAGVITv2 weights
+image_resolution: 512 # image resolution for VQ encoder
+answer_must_in_box: False
+
+# dataset you want to eval on, you need to download first, you can also modify your own dataset, see instructions in ./data
+dataset:
+    eval_dataset: "SEEDBench_IMG_32" #"MBPP""MATH500""GSM8K""AIME2024""GPQA""LiveCodeBench""HumanEval""LiveBench"
+    data_type: "mmu" #"code""math"
+    image_root: "/abs/path/of/data/images" # used when samples' image path is relative
+
+execute:
+    num_chunk: 128 # batch size of executing codes in coding eval tasks
+
+rollout:
+    num_response_per_task: 3
+    temperature: 0.1
+    steps: 512 # total steps of unmasking
+    max_gen_length: 512
+    batch_size: 2
+    remasking_strategy: ["low_confidence_static", "low_confidence_dynamic"]
+    target: "confidence" # target to decide which tokens to unmask, eg. confidence, margin_confidence and neg_entropy
+    dynamic_threshold: 0.95 # no use for "low_confidence_static"
+    block_size: 32
+    further_horizon: 128 # We find that performing the forward pass with a further horizon, eg. 128, (kv-cache sequence before current block, while doing full forward for currect [block_size + further_horizon] length sequence) yields competitive performance to running without KV-cache. Balances speed and performance.
+    output_unmasking_history: True
+    use_cache: True
+
+
+

@@ -1,0 +1,121 @@
+wandb:
+  entity: null
+  resume: 'auto'
+
+system:
+  HTTP_PROXY: ""  # your proxy server
+  HF_HOME: null
+  env_name: "" # your conda env name for RL
+  reward_env_name: "" # your conda env name for reward model (a vllm env to run Qwen3-VL)
+  envs_dir: ""  # the conda env dir
+  base_dir: "" # the project dir
+
+experiment:
+  project: "multinode_rl_mmada_v_process_reward_rlhf_with_value"
+  function: "train"
+  start_from_scratch: True
+  total_step: 40
+  save_every: 20
+  eval_every: 10
+  current_epoch: 1
+  deepspeed_file: "2_node_8_gpus_deepspeed_zero3"
+  num_node: 2
+  node_index: 0
+  train_value_every: 1
+
+model:
+  pretrained_model: ""   # should be the path to the MMaDA-8B model
+  value_base_model: ""   # same as pretrained_model
+  process_reward_model: "" # should be a Qwen3-VL-8B-Thinking model, you can also try other size
+  process_reward_chunk_size: 64
+  optimized_name: "optimized"
+  model_base: "mmada"
+  vq_model_path: ""  # should be showlab/magvitv2 model
+  image_resolution: 512
+  optimized_value_name: "optimized_value"
+
+dataset:
+  train_dataset: "SEEDBench_IMG_32" # This is a mini dataset for test, you can change to your own dataset. 
+  optimization_data: "rl_data"
+  data_type: "mmu"
+  image_root: ""  # should be ./data/images, you can also change to your own image root
+  add_think_prompt: True
+
+rollout:
+  num_task_per_step: 32
+  num_response_per_task: 8
+  temperature: 0.8
+  steps: 128
+  max_gen_length: 128
+  batch_size: 2
+  remasking_strategy: "low_confidence_dynamic"
+  target: "confidence"
+  dynamic_threshold: 0.95
+  block_size: 32
+  further_horizon: 128
+  use_cache: True
+
+reward:
+  answer_must_in_box: False
+  strict_len_check: False
+
+execute:
+  num_chunk: 128
+
+training:
+  gradient_accumulation_steps: 16
+  batch_size_lm: 2
+  mixed_precision: "bf16"
+  enable_tf32: True
+  seed: 12345
+  num_train_epochs: 1
+  max_grad_norm: 1.0
+  method: "TraceRL"
+  lower_p: 0.1
+  upper_p: 0.9
+  shrink: 8
+  post_num: 1
+  mask_times_per_sample: 2
+  max_gen_length: ${rollout.max_gen_length}
+  max_prompt_len: 512
+  eps: 0.20
+  beta: 0.01
+  use_kl_estimator_k3: True
+
+  gradient_checkpointing_enable: False
+  gam: 1.0
+  lam: 1.0
+
+optimizer:
+  name: adamw
+  params:
+    learning_rate: 1e-6
+    value_learning_rate: 5e-6
+    scale_lr: False
+    beta1: 0.9
+    beta2: 0.999
+    weight_decay: 0.0
+    epsilon: 1e-8
+
+lr_scheduler:
+  scheduler: "cosine"
+  params:
+    learning_rate: ${optimizer.params.learning_rate}
+    warmup_steps: 0
+    min_lr_scale: 1.0
+
+evaluation:
+  if_eval: True
+  eval_dataset: "SEEDBench_IMG_32" # mini dataset for test
+  data_type: "mmu"
+  num_response_per_task: 3
+  temperature: 0.1
+  steps: 128
+  max_gen_length: 128
+  batch_size: 2
+  remasking_strategy: ["low_confidence_static"]
+  target: "confidence"
+  dynamic_threshold: 0.95
+  block_size: 32
+  further_horizon: 128
+  use_cache: True
