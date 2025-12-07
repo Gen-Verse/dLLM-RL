@@ -26,6 +26,20 @@ python download_data.py --dataset demon_openr1math
 
 RL data can be used directly, but you should preprocess the SFT data (such like `demon_openr1math`, rl data is not needed) first by `preprocess_sft.ipynb`.
 
+## For multimodal data
+
+We categorize data into two types: **SFT Data** (Supervised Fine-Tuning) and **RL/Eval Data** (Reinforcement Learning & Evaluation).
+
+### Datasets
+*   **SFT**: `data/sft_test_v.json` (provided as an example).
+*   **RL & Eval**: `data/SEEDBench_IMG_32.json` (provided as an example).
+
+### Image Directory
+All images used in these datasets should be stored in a unified directory, e.g., `data/images/`.
+*   **Configuration**: In your YAML config files, set `image_root` to this directory path.
+*   **Usage**: The system will automatically join `image_root` with the image paths defined in the dataset JSON files.
+
+---
 
 
 ## Customize Your Own Dataset
