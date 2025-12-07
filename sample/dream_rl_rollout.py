@@ -367,7 +367,7 @@ def random_select(data_list, random_k):
 
 # obtain prompt
 def get_prompt(data_i):
-    return Template(system_prompts).render(problem = data_i["question"])
+    return Template(system_prompts, keep_trailing_newline=True).render(problem = data_i["question"])
 
 
 
