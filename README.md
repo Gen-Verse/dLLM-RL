@@ -1,8 +1,8 @@
 <div align="center">
   <br>
   <img src="assets/logo.png" width="200">
-  <h2>Revolutionizing Reinforcement Learning Framework for Diffusion Large Language Models</h2>
-  <h3>Most comprehensive framework for dLLM's post-training</h3>
+  <h3>Revolutionizing Reinforcement Learning Framework for Diffusion Large Language Models</h3>
+  <h4>Most comprehensive framework for dLLM's and multimodal dLLM's post-training</h4>
 </div>
 
 
