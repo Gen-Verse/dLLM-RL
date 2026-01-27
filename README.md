@@ -26,7 +26,7 @@
   </a>
     <a href="https://yinjjiew.github.io/projects/dllmrl/">
     <img
-      src="https://img.shields.io/badge/Blog-dLLM--RL-blue?logo=rss&logoColor=white"
+      src="https://img.shields.io/badge/Blog-TraceRL-blue?logo=rss&logoColor=white"
       alt="Blog"
     />
   </a>
