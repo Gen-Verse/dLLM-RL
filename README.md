@@ -105,6 +105,7 @@ print(cleaned_text)
 ```
 
 ## 📰 Latest Updates
+* **[2026-01-26]** Our [TraceRL](https://openreview.net/forum?id=KNAyc9DMe3) paper has been accepted by ICLR 2026! 
 * **[2025-12-07]** 🔥 We support RLHF, fine-grained process reward, and multimodal RL/SFT now!
 * **[2025-09-08]** We release our models, [TraDo-4B-Instruct](https://huggingface.co/Gen-Verse/TraDo-4B-Instruct) and [TraDo-8B-Instruct](https://huggingface.co/Gen-Verse/TraDo-8B-Instruct), and the long-CoT diffusion language model [TraDo-8B-Thinking](https://huggingface.co/Gen-Verse/TraDo-8B-Thinking).
 * **[2025-09-08]** We release inference and training (SFT and RL) code compatible with a wide range of diffusion language models, including [TraDo](https://arxiv.org/abs/2509.06949), [SDAR](https://github.com/JetAstra/SDAR), [Dream](https://github.com/DreamLM/Dream), [LLaDA](https://github.com/ML-GSAI/LLaDA), [MMaDA](https://github.com/Gen-Verse/MMaDA), and [Diffu-Coder](https://github.com/apple/ml-diffucoder).
